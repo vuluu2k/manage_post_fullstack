@@ -1,0 +1,41 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "vuluu2k",
+  "license": "MIT",
+  "scripts": {
+    "start": "node dist/index.js",
+    "start-ts": "ts-node src/index.ts",
+    "watch": "tsc -w",
+    "dev": "nodemon --inspect dist/index.js",
+    "dev-ts": "nodemon --inspect --exec ts-node src/index.ts"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.12",
+    "@types/express": "^4.17.14",
+    "@types/express-session": "^1.17.5",
+    "@types/node": "^18.11.10",
+    "@types/nodemailer": "^6.4.6",
+    "nodemon": "^2.0.20",
+    "ts-node": "^10.9.1",
+    "typescript": "^4.9.3"
+  },
+  "dependencies": {
+    "apollo-server-express": "^3.11.1",
+    "class-validator": "^0.13.2",
+    "connect-mongo": "^4.6.0",
+    "cors": "^2.8.5",
+    "dataloader": "^2.1.0",
+    "dotenv": "^16.0.3",
+    "express": "^4.18.2",
+    "express-session": "^1.17.3",
+    "graphql": "^16.6.0",
+    "nodemailer": "^6.8.0",
+    "pg": "^8.8.0",
+    "reflect-metadata": "^0.1.13",
+    "type-graphql": "^1.1.1",
+    "typeorm": "^0.3.10",
+    "uuid": "^9.0.0"
+  }
+}
