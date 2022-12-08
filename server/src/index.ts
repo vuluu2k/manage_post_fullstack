@@ -12,6 +12,11 @@ import cookieParser from 'cookie-parser';
 import { ApolloServerPluginDrainHttpServer, ApolloServerPluginLandingPageGraphQLPlayground } from 'apollo-server-core';
 import { Context } from './types/Context';
 import { UserResolver } from './resolvers/user';
+import mongoose from 'mongoose';
+import session from 'express-session';
+import MongoStore from 'connect-mongo';
+import { COOKIE_NAME, __prod__ } from './constants/index';
+import { PostResolver } from './resolvers/post';
 
 const dataSource = new DataSource({
   type: 'postgres',
@@ -24,11 +29,29 @@ const dataSource = new DataSource({
 });
 
 const main = async () => {
+  const app = express();
+  const mongoUrl = `mongodb+srv://${process.env.DB_MONGODB_USER}:${process.env.DB_MONGODB_PASSWORD}@reddit.hseg0pb.mongodb.net/?retryWrites=true&w=majority`;
+  const PORT = process.env.PORT || 4000;
+
+  await mongoose.connect(mongoUrl);
+  app.use(
+    session({
+      name: COOKIE_NAME,
+      store: MongoStore.create({ mongoUrl: mongoUrl }),
+      cookie: {
+        maxAge: 1000 * 60 * 60,
+        httpOnly: true,
+        secure: __prod__,
+        sameSite: 'lax',
+      },
+      secret: process.env.SESSION_SECRET_DEV_PROD as string,
+      saveUninitialized: false,
+      resave: false,
+    })
+  );
+
   // load entities, establish db connection, sync schema, etc.
   await dataSource.connect();
-
-  const PORT = process.env.PORT || 4000;
-  const app = express();
 
   app.use(express.json());
   app.use(cookieParser());
@@ -38,7 +61,7 @@ const main = async () => {
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
       validate: false,
-      resolvers: [HelloResolver, UserResolver],
+      resolvers: [HelloResolver, UserResolver,PostResolver],
     }),
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer: httpServer }), ApolloServerPluginLandingPageGraphQLPlayground],
     context: ({ req, res }): Pick<Context, 'req' | 'res'> => ({

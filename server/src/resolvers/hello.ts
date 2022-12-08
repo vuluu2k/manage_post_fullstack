@@ -1,10 +1,12 @@
 // import { Context } from '../types/Context'
-import {  Query, Resolver } from 'type-graphql'
+import { Ctx, Query, Resolver } from 'type-graphql';
+import { Context } from '../types/Context';
 
 @Resolver()
 export class HelloResolver {
-	@Query(_returns => String)
-	hello() {
-		return 'hello world'
-	}
+  @Query(_returns => String)
+  hello(@Ctx() { req }: Context) {
+    console.log(req.session.userId);
+    return 'hello world';
+  }
 }
