@@ -1,7 +1,6 @@
-import { Arg, Ctx, ID, Mutation, Query, Resolver, UseMiddleware } from 'type-graphql';
+import { Arg, ID, Mutation, Query, Resolver, UseMiddleware } from 'type-graphql';
 import { Post } from '../entities/Post';
 import { checkAuth } from '../middlewares/checkAuth';
-import { Context } from '../types/Context';
 import { CreatePostInput } from '../types/CreatePostInput';
 import { PostMutationResponse } from '../types/PostMutationResponse';
 import { UpdatePostInput } from '../types/UpdatePostInput';
@@ -71,7 +70,7 @@ export class PostResolver {
 
   @Mutation(_return => PostMutationResponse)
   @UseMiddleware(checkAuth)
-  async deletePost(@Arg('id', _type => ID) id: number, @Ctx() { req }: Context): Promise<PostMutationResponse> {
+  async deletePost(@Arg('id', _type => ID) id: number): Promise<PostMutationResponse> {
     try {
       const existingPost = await Post.findOneBy({ id });
       if (!existingPost)

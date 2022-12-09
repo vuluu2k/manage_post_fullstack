@@ -13,25 +13,25 @@ export const validateRegisterInput = (registerInput: RegisterInput) => {
         },
       ],
     };
-  if (username?.length <= 2) {
+  if (username.length <= 2) {
     return {
       message: 'Tên người dùng tối thiểu là 2 kí tự',
       errors: [
         {
           field: 'username',
-          message: `Tên người dùng có ${username.length} không hợp lệ`,
+          message: `Tên người dùng có độ dài ${username.length} không hợp lệ`,
         },
       ],
     };
   }
 
-  if (password?.length <= 8) {
+  if (password.length < 8) {
     return {
-      message: 'Tên người dùng tối thiểu là 2 kí tự',
+      message: 'Mật khẩu tối thiểu là 8 kí tự',
       errors: [
         {
           field: 'password',
-          message: `Tên người dùng có ${password.length} không hợp lệ`,
+          message: `Mật khẩu có độ dài ${password.length} không hợp lệ`,
         },
       ],
     };
