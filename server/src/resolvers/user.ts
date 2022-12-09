@@ -66,6 +66,7 @@ export class UserResolver {
           code: 400,
           success: false,
           message: 'Mật khẩu hoặc tài khoản không tồn tại',
+          errors: [{ field: 'password', message: 'Mật khẩu hoặc tài khoản không chính xác' }],
         };
       const checkPassword = await argon2.verify(existingUser.password, password);
 
