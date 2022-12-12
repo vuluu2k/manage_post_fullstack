@@ -1,4 +1,4 @@
-import { Box, Button } from '@chakra-ui/react';
+import { Box, Button, Flex, Spinner } from '@chakra-ui/react';
 import { Form, Formik, FormikHelpers } from 'formik';
 import Router from 'next/router';
 
@@ -8,6 +8,7 @@ import { LoginInput, MeDocument, MeQuery, useLoginMutation } from 'generated/gra
 import { mapFieldErrors } from 'helpers/mapFieldErrors';
 import { useToast } from '@chakra-ui/react';
 import { routes } from 'config';
+import { useCheckAuth } from 'utils/useCheckAuth';
 
 type Props = {};
 
@@ -16,6 +17,7 @@ type loginInputValues = LoginInput;
 function Login({}: Props) {
   const toast = useToast();
   const initialValues: loginInputValues = { usernameOrEmail: '', password: '' };
+  const { data: authData, loading: authLoading } = useCheckAuth();
   const [loginUser, { data: _loginUserData, loading: _loginUserLoading, error: _loginUserError }] = useLoginMutation();
 
   const handleOnLogin = async (values: loginInputValues, { setErrors }: FormikHelpers<loginInputValues>) => {
@@ -42,6 +44,12 @@ function Login({}: Props) {
       Router.push(routes.home);
     }
   };
+
+  if (authLoading || (!authLoading && authData?.me)) {
+    return <Flex alignItems="center" justifyContent="center" w="100vw" h="100vh">
+      <Spinner></Spinner>
+    </Flex>
+  }
 
   return (
     <Wrapper>

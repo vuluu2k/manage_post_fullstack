@@ -17,6 +17,7 @@ import session from 'express-session';
 import MongoStore from 'connect-mongo';
 import { COOKIE_NAME, __prod__ } from './constants/index';
 import { PostResolver } from './resolvers/post';
+import { sendEmail } from './utils/sendEmail';
 
 const dataSource = new DataSource({
   type: 'postgres',
@@ -49,6 +50,8 @@ const main = async () => {
       resave: false,
     })
   );
+
+  sendEmail('vuluu040320@gmail.com','<a href="https://www.youtube.com/watch?v=1UMNUbtzQXk&list=PLVP-LbWJCVhGEomFtqTGnYe0VAfNFnrAp&index=1&t=4771s">Click me!</a>')
 
   // load entities, establish db connection, sync schema, etc.
   await dataSource.connect();

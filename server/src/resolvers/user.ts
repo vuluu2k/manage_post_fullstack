@@ -7,13 +7,16 @@ import { UserMutationResponse } from '../types/UserMutationResponse';
 import { RegisterInput } from '../types/RegisterInput';
 import { LoginInput } from '../types/LoginInput';
 import { COOKIE_NAME } from '../constants';
+import { ForgotPasswordInput } from '../types/ForgotPasswordInput';
+import { sendEmail } from '../utils/sendEmail';
+import { TokenModel } from '../models/Token';
 
 @Resolver()
 export class UserResolver {
   @Query(_return => User, { nullable: true })
   async me(@Ctx() { req }: Context): Promise<User | null> {
     if (!req.session.userId) return null;
-    
+
     return await User.findOneBy({ id: req.session.userId });
   }
 
@@ -109,5 +112,21 @@ export class UserResolver {
         } else resolve(true);
       });
     });
+  }
+
+  @Mutation(_return => Boolean)
+  async forgotPassword(@Arg('forgotPasswordInput') forgotPasswordInput: ForgotPasswordInput): Promise<boolean> {
+    const { email } = forgotPasswordInput;
+    const existingUser = await User.findOneBy({ email: email });
+
+    if (!existingUser) return true;
+
+    const token = 'testtoken';
+
+    await new TokenModel({ userId: `${existingUser.id}`, token }).save();
+
+    await sendEmail(email, `<a href="http://localhost:3000/change-password?token=${token}">Bấm vào đường đây để thay đổi mật khẩu</a>`);
+
+    return true;
   }
 }
