@@ -10,6 +10,8 @@ import { COOKIE_NAME } from '../constants';
 import { ForgotPasswordInput } from '../types/ForgotPasswordInput';
 import { sendEmail } from '../utils/sendEmail';
 import { TokenModel } from '../models/Token';
+import { v4 as uuidv4 } from 'uuid';
+import { ChangePasswordInput } from '../types/ChangePasswordInput';
 
 @Resolver()
 export class UserResolver {
@@ -121,12 +123,96 @@ export class UserResolver {
 
     if (!existingUser) return true;
 
-    const token = 'testtoken';
+    await TokenModel.findOneAndDelete({ userId: `${existingUser.id}` });
 
-    await new TokenModel({ userId: `${existingUser.id}`, token }).save();
+    const resetToken = uuidv4();
 
-    await sendEmail(email, `<a href="http://localhost:3000/change-password?token=${token}">Bấm vào đường đây để thay đổi mật khẩu</a>`);
+    const hashedResetToken = await argon2.hash(resetToken);
+
+    await new TokenModel({ userId: `${existingUser.id}`, token: hashedResetToken }).save();
+
+    await sendEmail(
+      email,
+      `<a href="http://localhost:3000/change-password?token=${resetToken}&userId=${existingUser.id}">Bấm vào đường đây để thay đổi mật khẩu</a>`
+    );
 
     return true;
+  }
+
+  @Mutation(_return => UserMutationResponse)
+  async changePassword(
+    @Arg('token') token: string,
+    @Arg('userId') userId: string,
+    @Arg('changePasswordInput') changePasswordInput: ChangePasswordInput,
+    @Ctx() { req }: Context
+  ): Promise<UserMutationResponse> {
+    try {
+      const { newPassword } = changePasswordInput;
+      if (newPassword.length < 8)
+        return {
+          code: 400,
+          success: false,
+          message: 'Mật khẩu tối thiểu là 8 kí tự',
+          errors: [
+            {
+              field: 'newPassword',
+              message: `Mật khẩu có độ dài ${newPassword.length} không hợp lệ`,
+            },
+          ],
+        };
+
+      const resetPasswordTokenRecord = await TokenModel.findOne({ userId: userId });
+      const resetPasswordTokenValid = resetPasswordTokenRecord && (await argon2.verify(resetPasswordTokenRecord.token, token));
+
+      if (!resetPasswordTokenRecord || !resetPasswordTokenValid)
+        return {
+          code: 400,
+          success: false,
+          message: 'Token không hợp lệ / hết hạn',
+          errors: [
+            {
+              field: 'token',
+              message: 'Token không hợp lệ / hết hạn',
+            },
+          ],
+        };
+
+      const userIdNum = parseInt(userId);
+      const existingUser = await User.findOneBy({ id: userIdNum });
+
+      if (!existingUser)
+        return {
+          code: 400,
+          success: false,
+          message: 'Tài khoản không còn tồn tại',
+          errors: [
+            {
+              field: 'token',
+              message: 'Tài khoản không còn tồn tại',
+            },
+          ],
+        };
+
+      const updatedPassword = await argon2.hash(newPassword);
+
+      await User.update({ id: userIdNum }, { password: updatedPassword });
+      await resetPasswordTokenRecord.deleteOne();
+
+      req.session.userId = existingUser.id;
+
+      return {
+        code: 200,
+        success: true,
+        message: 'Thay đổi mật khẩu thành công',
+        user: existingUser,
+      };
+    } catch (error) {
+      console.log(error);
+      return {
+        code: 500,
+        success: false,
+        message: `Server Internal Error ${error.message}`,
+      };
+    }
   }
 }

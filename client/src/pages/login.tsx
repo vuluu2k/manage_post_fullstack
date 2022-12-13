@@ -1,6 +1,7 @@
 import { Box, Button, Flex, Spinner } from '@chakra-ui/react';
 import { Form, Formik, FormikHelpers } from 'formik';
 import Router from 'next/router';
+import NextLink from 'next/link';
 
 import InputField from 'components/InputField';
 import Wrapper from 'components/Wrapper';
@@ -46,9 +47,11 @@ function Login({}: Props) {
   };
 
   if (authLoading || (!authLoading && authData?.me)) {
-    return <Flex alignItems="center" justifyContent="center" w="100vw" h="100vh">
-      <Spinner></Spinner>
-    </Flex>
+    return (
+      <Flex alignItems="center" justifyContent="center" w="100vw" h="100vh">
+        <Spinner></Spinner>
+      </Flex>
+    );
   }
 
   return (
@@ -62,6 +65,10 @@ function Login({}: Props) {
               <Box mt={4}>
                 <InputField name="password" placeholder="Nhập mật khẩu" label="Mật khẩu" type="password" />
               </Box>
+
+              <Flex mt={2}>
+                <NextLink href={routes.forgotPassword}>Quên mật khẩu?</NextLink>
+              </Flex>
 
               <Button type="submit" colorScheme="teal" mt={4} isLoading={isSubmitting}>
                 Đăng nhập
