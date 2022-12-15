@@ -1,14 +1,4 @@
-import {
-  Avatar,
-  AvatarBadge,
-  Box,
-  Button,
-  Flex,
-  Heading,
-  Popover, PopoverContent,
-  PopoverTrigger,
-  Spinner
-} from '@chakra-ui/react';
+import { Avatar, AvatarBadge, Box, Button, Flex, Heading, Popover, PopoverContent, PopoverTrigger, Spinner } from '@chakra-ui/react';
 import Link from 'next/link';
 
 import { routes } from 'config';

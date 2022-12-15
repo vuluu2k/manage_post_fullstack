@@ -1,12 +1,25 @@
-import { Arg, ID, Mutation, Query, Resolver, UseMiddleware } from 'type-graphql';
+import { Arg, FieldResolver, ID, Int, Mutation, Query, Resolver, Root, UseMiddleware } from 'type-graphql';
+import { LessThan } from 'typeorm';
 import { Post } from '../entities/Post';
+import { User } from '../entities/User';
 import { checkAuth } from '../middlewares/checkAuth';
 import { CreatePostInput } from '../types/CreatePostInput';
+import { PaginatedPosts } from '../types/PaginatedPosts';
 import { PostMutationResponse } from '../types/PostMutationResponse';
 import { UpdatePostInput } from '../types/UpdatePostInput';
 
-@Resolver()
+@Resolver(_of => Post)
 export class PostResolver {
+  @FieldResolver(_return => String)
+  textSnippet(@Root() root: Post) {
+    return root.text.slice(0, 50);
+  }
+
+  @FieldResolver(_return => User)
+  async user(@Root() root: Post) {
+    return await User.findOneBy({ id: root.userId });
+  }
+
   @Mutation(_return => PostMutationResponse)
   async createPost(@Arg('createPostInput') createPostInput: CreatePostInput): Promise<PostMutationResponse> {
     const { title, text } = createPostInput;
@@ -30,9 +43,32 @@ export class PostResolver {
     }
   }
 
-  @Query(_return => [Post])
-  async getPosts(): Promise<Post[]> {
-    return await Post.find();
+  @Query(_return => PaginatedPosts, { nullable: true })
+  async getPosts(@Arg('limit', _type => Int) limit: number, @Arg('cursor', { nullable: true }) cursor?: string): Promise<PaginatedPosts | null> {
+    try {
+      const totalCount = await Post.count();
+      const realLimit = Math.min(10, limit);
+
+      let lastPost: Post = {} as Post;
+      const findOptions: { [key: string]: any } = { order: { createdAt: 'DESC' }, take: realLimit };
+      if (cursor) {
+        findOptions.where = { createdAt: LessThan(cursor) };
+        lastPost = (await Post.find({ order: { createdAt: 'ASC' }, take: 1 }))[0];
+      }
+
+      const paginatedPosts = await Post.find(findOptions);
+
+      return {
+        totalCount,
+        cursor: paginatedPosts[paginatedPosts.length - 1].createdAt,
+        hasMore: cursor
+          ? paginatedPosts[paginatedPosts.length - 1].createdAt.toString() !== lastPost.createdAt.toString()
+          : paginatedPosts.length !== totalCount,
+        paginatedPosts,
+      };
+    } catch (error) {
+      return null;
+    }
   }
 
   @Query(_return => Post, { nullable: true })

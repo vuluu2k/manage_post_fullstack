@@ -55,7 +55,7 @@ function Login({}: Props) {
   }
 
   return (
-    <Wrapper>
+    <Wrapper size="small">
       <Formik initialValues={initialValues} onSubmit={handleOnLogin}>
         {({ isSubmitting }) => {
           return (

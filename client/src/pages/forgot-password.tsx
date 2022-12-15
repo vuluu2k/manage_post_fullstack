@@ -31,7 +31,7 @@ const ForgotPassword = () => {
         <Formik initialValues={initialValues} onSubmit={onForgotPasswordSubmit}>
           {({ isSubmitting }) =>
             !loading && data ? (
-              <Box>Please check your inbox</Box>
+              <Box>Vui lòng check hộp thoại mail của bạn</Box>
             ) : (
               <Form>
                 <InputField name="email" placeholder="Email" label="Email" type="email" />

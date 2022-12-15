@@ -4,4 +4,6 @@ export const routes = {
   register: '/register',
   profile: '/profile',
   forgotPassword: '/forgot-password',
+  changePassword: '/change-password',
+  postDetail:'/post/:postId'
 };

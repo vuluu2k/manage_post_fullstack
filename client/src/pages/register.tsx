@@ -58,7 +58,7 @@ function Register({}: Props) {
   }
 
   return (
-    <Wrapper>
+    <Wrapper size="small">
       <Formik initialValues={initialValues} onSubmit={handleOnRegister}>
         {({ isSubmitting }) => {
           return (

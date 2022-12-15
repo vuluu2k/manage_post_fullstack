@@ -46,7 +46,7 @@ const ChangePassword = () => {
         }
         setErrors(fieldErrors);
       } else if (response.data?.changePassword.user) {
-        router.push('/');
+        router.push(routes.home);
       }
     }
   };
@@ -66,9 +66,7 @@ const ChangePassword = () => {
         </Alert>
 
         <Flex mt={2}>
-          <NextLink href="/login">
-            <Link ml="auto">Back to Login</Link>
-          </NextLink>
+          <NextLink href={routes.login}>Quay lại đăng nhập</NextLink>
         </Flex>
       </Wrapper>
     );

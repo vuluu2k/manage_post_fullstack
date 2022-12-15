@@ -131,6 +131,7 @@ export class UserResolver {
 
     await new TokenModel({ userId: `${existingUser.id}`, token: hashedResetToken }).save();
 
+
     await sendEmail(
       email,
       `<a href="http://localhost:3000/change-password?token=${resetToken}&userId=${existingUser.id}">Bấm vào đường đây để thay đổi mật khẩu</a>`
