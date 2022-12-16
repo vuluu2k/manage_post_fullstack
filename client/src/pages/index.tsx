@@ -1,14 +1,33 @@
-import { Box, Flex, Heading, Spinner, Text } from '@chakra-ui/react';
+import { Box, Button, Flex, Heading, Spinner, Text } from '@chakra-ui/react';
 import NextLink from 'next/link';
 
 import Layout from 'components/Layout';
 import { PostsDocument, useMeQuery, usePostsQuery } from 'generated/graphql';
 import { addApolloState, initializeApollo } from 'lib/apolloClient';
 import PostEditDeleteButtons from 'components/PostEditDeleteButtons';
+import { NetworkStatus } from '@apollo/client';
 
 const Index = () => {
-  const { data: postsData, loading: postsLoading, error: postsError } = usePostsQuery({ variables: { limit: 5 } });
-  const { data: meData, loading: meLoading, error: meError } = useMeQuery();
+  const {
+    data: postsData,
+    loading: postsLoading,
+    error: _postsError,
+    fetchMore: postFetchMore,
+    networkStatus: postNetworkStatus,
+  } = usePostsQuery({
+    variables: { limit: 5 },
+    // component re-render when network status changed
+    notifyOnNetworkStatusChange: true,
+  });
+  const { data: meData, loading: _meLoading, error: _meError } = useMeQuery();
+
+  console.log(postsData?.getPosts?.cursor);
+
+  const handleLoadMorePosts = () => {
+    postFetchMore({ variables: { cursor: postsData?.getPosts?.cursor } });
+  };
+
+  const loadingMorePosts = postNetworkStatus === NetworkStatus.fetchMore;
 
   return (
     <Layout>
@@ -17,9 +36,9 @@ const Index = () => {
           <Spinner></Spinner>
         </Flex>
       ) : (
-        postsData?.getPosts?.paginatedPosts.map(post => {
+        postsData?.getPosts?.paginatedPosts.map((post,index) => {
           return (
-            <Flex key={post.id} mt={4} p={5} shadow="md" borderWidth="1px">
+            <Flex key={`${index}${post.id}`} mt={4} p={5} shadow="md" borderWidth="1px">
               <Box flex={1}>
                 <NextLink href={`/post/${post.id}`}>
                   <Heading fontSize="xl">{post.title}</Heading>
@@ -35,6 +54,14 @@ const Index = () => {
             </Flex>
           );
         })
+      )}
+
+      {postsData?.getPosts?.hasMore && (
+        <Flex>
+          <Button m="auto" my={8} isLoading={loadingMorePosts} onClick={handleLoadMorePosts}>
+            {loadingMorePosts ? 'Đang tải...' : 'Xem thêm'}
+          </Button>
+        </Flex>
       )}
     </Layout>
   );

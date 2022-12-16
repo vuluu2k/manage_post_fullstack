@@ -1,8 +1,9 @@
-import { Arg, FieldResolver, ID, Int, Mutation, Query, Resolver, Root, UseMiddleware } from 'type-graphql';
+import { Arg, Ctx, FieldResolver, ID, Int, Mutation, Query, Resolver, Root, UseMiddleware } from 'type-graphql';
 import { LessThan } from 'typeorm';
 import { Post } from '../entities/Post';
 import { User } from '../entities/User';
 import { checkAuth } from '../middlewares/checkAuth';
+import { Context } from '../types/Context';
 import { CreatePostInput } from '../types/CreatePostInput';
 import { PaginatedPosts } from '../types/PaginatedPosts';
 import { PostMutationResponse } from '../types/PostMutationResponse';
@@ -21,10 +22,10 @@ export class PostResolver {
   }
 
   @Mutation(_return => PostMutationResponse)
-  async createPost(@Arg('createPostInput') createPostInput: CreatePostInput): Promise<PostMutationResponse> {
+  async createPost(@Arg('createPostInput') createPostInput: CreatePostInput, @Ctx() { req }: Context): Promise<PostMutationResponse> {
     const { title, text } = createPostInput;
     try {
-      const newPost = Post.create({ title, text });
+      const newPost = Post.create({ title, text, userId: req.session.userId });
       await newPost.save();
 
       return {
@@ -46,27 +47,33 @@ export class PostResolver {
   @Query(_return => PaginatedPosts, { nullable: true })
   async getPosts(@Arg('limit', _type => Int) limit: number, @Arg('cursor', { nullable: true }) cursor?: string): Promise<PaginatedPosts | null> {
     try {
-      const totalCount = await Post.count();
+      const totalPostCount = await Post.count();
       const realLimit = Math.min(10, limit);
 
-      let lastPost: Post = {} as Post;
-      const findOptions: { [key: string]: any } = { order: { createdAt: 'DESC' }, take: realLimit };
+      const findOptions: { [key: string]: any } = {
+        order: {
+          createdAt: 'DESC',
+        },
+        take: realLimit,
+      };
+
+      let lastPost: Post[] = [];
       if (cursor) {
         findOptions.where = { createdAt: LessThan(cursor) };
-        lastPost = (await Post.find({ order: { createdAt: 'ASC' }, take: 1 }))[0];
+
+        lastPost = await Post.find({ order: { createdAt: 'ASC' }, take: 1 });
       }
 
-      const paginatedPosts = await Post.find(findOptions);
+      const posts = await Post.find(findOptions);
 
       return {
-        totalCount,
-        cursor: paginatedPosts[paginatedPosts.length - 1].createdAt,
-        hasMore: cursor
-          ? paginatedPosts[paginatedPosts.length - 1].createdAt.toString() !== lastPost.createdAt.toString()
-          : paginatedPosts.length !== totalCount,
-        paginatedPosts,
+        totalCount: totalPostCount,
+        cursor: posts[posts.length - 1].createdAt,
+        hasMore: cursor ? posts[posts.length - 1].createdAt.toString() !== lastPost[0].createdAt.toString() : posts.length !== totalPostCount,
+        paginatedPosts: posts,
       };
     } catch (error) {
+      console.log(error);
       return null;
     }
   }
@@ -106,7 +113,7 @@ export class PostResolver {
 
   @Mutation(_return => PostMutationResponse)
   @UseMiddleware(checkAuth)
-  async deletePost(@Arg('id', _type => ID) id: number): Promise<PostMutationResponse> {
+  async deletePost(@Arg('id', _type => ID) id: number, @Ctx() { req }: Context): Promise<PostMutationResponse> {
     try {
       const existingPost = await Post.findOneBy({ id });
       if (!existingPost)
@@ -116,9 +123,9 @@ export class PostResolver {
           message: 'Post not found',
         };
 
-      // if (existingPost.userId !== req.session.userId) {
-      // 	return { code: 401, success: false, message: 'Unauthorised' }
-      // }
+      if (existingPost.userId !== req.session.userId) {
+        return { code: 401, success: false, message: 'Bạn không có quyền trên bài đăng này' };
+      }
 
       // await Upvote.delete({postId: id})
 
