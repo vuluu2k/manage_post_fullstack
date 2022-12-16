@@ -90,11 +90,14 @@ export class PostResolver {
   }
 
   @Mutation(_return => PostMutationResponse)
-  async updatePost(@Arg('updatePostInput') updatePostInput: UpdatePostInput): Promise<PostMutationResponse> {
+  async updatePost(@Arg('updatePostInput') updatePostInput: UpdatePostInput, @Ctx() { req }: Context): Promise<PostMutationResponse> {
     const { id, title, text } = updatePostInput;
     try {
       const existingPost = await Post.findOneBy({ id });
       if (!existingPost) return { code: 400, success: false, message: 'Không tìm thấy bài đăng này' };
+      if (existingPost.userId !== req.session.userId) {
+        return { code: 401, success: false, message: 'Bạn không có quyền trên bài đăng này' };
+      }
 
       existingPost.title = title;
       existingPost.text = text;

@@ -31,12 +31,12 @@ const Index = () => {
 
   return (
     <Layout>
-      {postsLoading ? (
+      {postsLoading && !loadingMorePosts ? (
         <Flex alignItems="center" justifyContent="center" h="100vh">
           <Spinner></Spinner>
         </Flex>
       ) : (
-        postsData?.getPosts?.paginatedPosts.map((post,index) => {
+        postsData?.getPosts?.paginatedPosts.map((post, index) => {
           return (
             <Flex key={`${index}${post.id}`} mt={4} p={5} shadow="md" borderWidth="1px">
               <Box flex={1}>
