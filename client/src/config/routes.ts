@@ -5,5 +5,6 @@ export const routes = {
   profile: '/profile',
   forgotPassword: '/forgot-password',
   changePassword: '/change-password',
-  postDetail:'/post/:postId'
+  postDetail: '/post/:postId',
+  createPost: '/create-post',
 };

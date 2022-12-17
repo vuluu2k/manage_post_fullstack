@@ -6,6 +6,9 @@ import { PostsDocument, useMeQuery, usePostsQuery } from 'generated/graphql';
 import { addApolloState, initializeApollo } from 'lib/apolloClient';
 import PostEditDeleteButtons from 'components/PostEditDeleteButtons';
 import { NetworkStatus } from '@apollo/client';
+import { GetStaticProps } from 'next';
+
+export const limit = 5;
 
 const Index = () => {
   const {
@@ -15,13 +18,11 @@ const Index = () => {
     fetchMore: postFetchMore,
     networkStatus: postNetworkStatus,
   } = usePostsQuery({
-    variables: { limit: 5 },
+    variables: { limit: limit },
     // component re-render when network status changed
     notifyOnNetworkStatusChange: true,
   });
   const { data: meData, loading: _meLoading, error: _meError } = useMeQuery();
-
-  console.log(postsData?.getPosts?.cursor);
 
   const handleLoadMorePosts = () => {
     postFetchMore({ variables: { cursor: postsData?.getPosts?.cursor } });
@@ -46,9 +47,11 @@ const Index = () => {
                 <Text>Đăng bởi {post.user.username}</Text>
                 <Flex alignItems="center">
                   <Text mt={4}>{post.textSnippet}</Text>
-                  <Box ml="auto">
-                    <PostEditDeleteButtons postId={post.id} postUserId={String(meData?.me?.id)} />
-                  </Box>
+                  {meData?.me?.id === post.user.id && (
+                    <Box ml="auto">
+                      <PostEditDeleteButtons postId={post.id} postUserId={String(meData?.me?.id)} />
+                    </Box>
+                  )}
                 </Flex>
               </Box>
             </Flex>
@@ -67,19 +70,19 @@ const Index = () => {
   );
 };
 
-export async function getStaticProps() {
+export const getStaticProps: GetStaticProps = async () => {
   const apolloClient = initializeApollo();
 
   await apolloClient.query({
     query: PostsDocument,
     variables: {
-      limit: 5,
+      limit: limit,
     },
   });
 
   return addApolloState(apolloClient, {
     props: {},
   });
-}
+};
 
 export default Index;

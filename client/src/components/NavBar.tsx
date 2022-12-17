@@ -1,5 +1,6 @@
 import { Avatar, AvatarBadge, Box, Button, Flex, Heading, Popover, PopoverContent, PopoverTrigger, Spinner } from '@chakra-ui/react';
 import Link from 'next/link';
+import Router from 'next/router';
 
 import { routes } from 'config';
 import { MeDocument, MeQuery, useLogoutMutation, useMeQuery } from 'generated/graphql';
@@ -40,6 +41,7 @@ function NavBar({}: Props) {
                 </PopoverTrigger>
                 <PopoverContent p={2}>
                   <Button>Thông tin tài khoản</Button>
+                  <Button mt={2} onClick={()=>Router.push(routes.createPost)}>Tạo bài viết</Button>
                   <Button mt={2} onClick={handleOnLogout}>
                     Đăng xuất
                   </Button>
