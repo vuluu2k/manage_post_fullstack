@@ -1,9 +1,10 @@
 import { Box, IconButton } from '@chakra-ui/react';
 import { DeleteIcon, EditIcon } from '@chakra-ui/icons';
 import NextLink from 'next/link';
-// import { PaginatedPosts, useDeletePostMutation, useMeQuery } from '../generated/graphql';
-// import { Reference } from '@apollo/client';
-// import { useRouter } from 'next/router';
+import { PaginatedPosts, useDeletePostMutation, useMeQuery } from '../generated/graphql';
+import { Reference } from '@apollo/client';
+import { useRouter } from 'next/router';
+import { routes } from 'config';
 
 interface PostEditDeleteButtonsProps {
   postId: string;
@@ -11,36 +12,36 @@ interface PostEditDeleteButtonsProps {
 }
 
 const PostEditDeleteButtons = ({ postId, postUserId }: PostEditDeleteButtonsProps) => {
-  // const router = useRouter();
-  // const { data: meData } = useMeQuery();
-  // const [deletePost, _] = useDeletePostMutation();
+  const router = useRouter();
+  const { data: meData } = useMeQuery();
+  const [deletePost, _] = useDeletePostMutation();
 
-  const onPostDelete = async (postId: string) => { 
-    // await deletePost({
-    //   variables: { id: postId },
-    //   update(cache, { data }) {
-    //     if (data?.deletePost.success) {
-    //       cache.modify({
-    //         fields: {
-    //           posts(existing: Pick<PaginatedPosts, '__typename' | 'cursor' | 'hasMore' | 'totalCount'> & { paginatedPosts: Reference[] }) {
-    //             const newPostsAfterDeletion = {
-    //               ...existing,
-    //               totalCount: existing.totalCount - 1,
-    //               paginatedPosts: existing.paginatedPosts.filter(postRefObject => postRefObject.__ref !== `Post:${postId}`),
-    //             };
+  const onPostDelete = async (postId: string) => {
+    await deletePost({
+      variables: { id: postId },
+      update(cache, { data }) {
+        if (data?.deletePost.success) {
+          cache.modify({
+            fields: {
+              posts(existing: Pick<PaginatedPosts, '__typename' | 'cursor' | 'hasMore' | 'totalCount'> & { paginatedPosts: Reference[] }) {
+                const newPostsAfterDeletion = {
+                  ...existing,
+                  totalCount: existing.totalCount - 1,
+                  paginatedPosts: existing.paginatedPosts.filter(postRefObject => postRefObject.__ref !== `Post:${postId}`),
+                };
 
-    //             return newPostsAfterDeletion;
-    //           },
-    //         },
-    //       });
-    //     }
-    //   },
-    // });
+                return newPostsAfterDeletion;
+              },
+            },
+          });
+        }
+      },
+    });
 
-    // if (router.route !== '/') router.push('/');
+    if (router.route !== routes.home) router.push(routes.home);
   };
 
-  // if (meData?.me?.id !== postUserId) return null;
+  if (meData?.me?.id !== postUserId) return null;
 
   return (
     <Box>

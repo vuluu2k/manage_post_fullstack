@@ -65,7 +65,7 @@ export const getStaticPaths: GetStaticPaths = async () => {
     query: PostIdsDocument,
     variables: { limit },
   });
-
+ 
   return {
     paths: data.getPosts!.paginatedPosts.map(post => ({
       params: { id: `${post.id}` },
