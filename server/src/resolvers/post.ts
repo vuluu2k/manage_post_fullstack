@@ -1,4 +1,6 @@
-import { Arg, Ctx, FieldResolver, ID, Int, Mutation, Query, Resolver, Root, UseMiddleware } from 'type-graphql';
+import { Upvote } from './../entities/Upvote';
+import { UserInputError } from 'apollo-server-express';
+import { Arg, Ctx, FieldResolver, ID, Int, Mutation, Query, registerEnumType, Resolver, Root, UseMiddleware } from 'type-graphql';
 import { LessThan } from 'typeorm';
 import { Post } from '../entities/Post';
 import { User } from '../entities/User';
@@ -8,6 +10,12 @@ import { CreatePostInput } from '../types/CreatePostInput';
 import { PaginatedPosts } from '../types/PaginatedPosts';
 import { PostMutationResponse } from '../types/PostMutationResponse';
 import { UpdatePostInput } from '../types/UpdatePostInput';
+import { VoteType } from '../types/VoteType';
+
+registerEnumType(VoteType, {
+  name: 'VoteType', // this one is mandatory
+  // description: 'The basic directions', // this one is optional
+});
 
 @Resolver(_of => Post)
 export class PostResolver {
@@ -19,6 +27,13 @@ export class PostResolver {
   @FieldResolver(_return => User)
   async user(@Root() root: Post) {
     return await User.findOneBy({ id: root.userId });
+  }
+
+  @FieldResolver(_return => Int)
+  async voteType(@Root() root: Post, @Ctx() { req }: Context) {
+    if (req.session.userId) return 0;
+    const existingVote = await Upvote.findOne({ where: { postId: root.id, userId: req.session.userId } });
+    return (existingVote && existingVote?.value) || 0;
   }
 
   @Mutation(_return => PostMutationResponse)
@@ -143,5 +158,60 @@ export class PostResolver {
         message: `Server Internal Error ${error.message}`,
       };
     }
+  }
+
+  @Mutation(_return => PostMutationResponse)
+  @UseMiddleware(checkAuth)
+  async vote(
+    @Arg('postId', _type => Int) postId: number,
+    @Arg('voteType', _type => VoteType) voteType: VoteType,
+    @Ctx() context: Context
+  ): Promise<PostMutationResponse> {
+    const { req, dataSource } = context;
+
+    return await dataSource.transaction(async transactionalEntityManager => {
+      let post = await transactionalEntityManager.findOne(Post, { where: { id: postId } });
+      if (!post) {
+        throw new UserInputError(`Không thấy bài đăng có id: ${postId}`);
+      }
+
+      const existingVote = await transactionalEntityManager.findOne(Upvote, { where: { postId: postId, userId: req.session.userId } });
+
+      console.log('response', existingVote, existingVote?.value === voteType, voteType);
+
+      if (existingVote) {
+        if (existingVote.value === voteType) {
+          return {
+            code: 400,
+            success: false,
+            message: `Bạn đã vote ${voteType === 1 ? 'up' : 'down'}`,
+          };
+        }
+        await transactionalEntityManager.save(Upvote, {
+          ...existingVote,
+          value: voteType,
+        });
+      } else {
+        const newVote = transactionalEntityManager.create(Upvote, {
+          userId: req.session.userId,
+          postId: postId,
+          value: voteType,
+        });
+
+        await transactionalEntityManager.save(newVote);
+      }
+
+      const handlePoint = existingVote ? voteType * 2 : voteType;
+
+      post.points = post.points + handlePoint;
+      post = await transactionalEntityManager.save(post);
+
+      return {
+        code: 200,
+        success: true,
+        message: 'Vote thành công',
+        post: post,
+      };
+    });
   }
 }

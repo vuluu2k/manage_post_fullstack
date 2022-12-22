@@ -23,7 +23,7 @@ const PostEditDeleteButtons = ({ postId, postUserId }: PostEditDeleteButtonsProp
         if (data?.deletePost.success) {
           cache.modify({
             fields: {
-              posts(existing: Pick<PaginatedPosts, '__typename' | 'cursor' | 'hasMore' | 'totalCount'> & { paginatedPosts: Reference[] }) {
+              getPosts(existing: Pick<PaginatedPosts, '__typename' | 'cursor' | 'hasMore' | 'totalCount'> & { paginatedPosts: Reference[] }) {
                 const newPostsAfterDeletion = {
                   ...existing,
                   totalCount: existing.totalCount - 1,

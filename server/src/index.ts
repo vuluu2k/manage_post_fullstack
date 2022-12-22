@@ -5,6 +5,7 @@ import { DataSource } from 'typeorm';
 import http from 'http';
 import { User } from './entities/User';
 import { Post } from './entities/Post';
+import { Upvote } from './entities/Upvote';
 import { ApolloServer } from 'apollo-server-express';
 import { buildSchema } from 'type-graphql';
 import { HelloResolver } from './resolvers/hello';
@@ -18,14 +19,14 @@ import MongoStore from 'connect-mongo';
 import { COOKIE_NAME, __prod__ } from './constants/index';
 import { PostResolver } from './resolvers/post';
 
-const dataSource = new DataSource({
+export const dataSource = new DataSource({
   type: 'postgres',
   database: 'reddit',
   username: process.env.DB_USERNAME,
   password: process.env.DB_PASSWORD,
   logging: true,
   synchronize: true,
-  entities: [User, Post],
+  entities: [User, Post, Upvote],
 });
 
 const main = async () => {
@@ -50,7 +51,6 @@ const main = async () => {
     })
   );
 
-
   // load entities, establish db connection, sync schema, etc.
   await dataSource.connect();
 
@@ -62,12 +62,13 @@ const main = async () => {
   const apolloServer = new ApolloServer({
     schema: await buildSchema({
       validate: false,
-      resolvers: [HelloResolver, UserResolver,PostResolver],
+      resolvers: [HelloResolver, UserResolver, PostResolver],
     }),
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer: httpServer }), ApolloServerPluginLandingPageGraphQLPlayground],
-    context: ({ req, res }): Pick<Context, 'req' | 'res'> => ({
+    context: ({ req, res }): Pick<Context, 'req' | 'res' | 'dataSource'> => ({
       req,
       res,
+      dataSource: dataSource,
     }),
   });
 

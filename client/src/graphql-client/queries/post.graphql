@@ -4,5 +4,6 @@ query Post($id: ID!) {
     title
     text
     userId
+    points
   }
 }

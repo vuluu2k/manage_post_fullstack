@@ -7,6 +7,7 @@ import { addApolloState, initializeApollo } from 'lib/apolloClient';
 import PostEditDeleteButtons from 'components/PostEditDeleteButtons';
 import { NetworkStatus } from '@apollo/client';
 import { GetStaticProps } from 'next';
+import UpVoteSection from 'components/UpVoteSection';
 
 export const limit = 5;
 
@@ -40,6 +41,7 @@ const Index = () => {
         postsData?.getPosts?.paginatedPosts.map((post, index) => {
           return (
             <Flex key={`${index}${post.id}`} mt={4} p={5} shadow="md" borderWidth="1px">
+              <UpVoteSection post={post} />
               <Box flex={1}>
                 <NextLink href={`/post/${post.id}`}>
                   <Heading fontSize="xl">{post.title}</Heading>

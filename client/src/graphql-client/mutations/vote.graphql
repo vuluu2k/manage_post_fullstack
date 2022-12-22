@@ -1,0 +1,5 @@
+mutation Vote($voteType: VoteType!, $postId: Int!) {
+  vote(voteType: $voteType, postId: $postId) {
+    ...postMutationResponse
+  }
+}
