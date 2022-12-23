@@ -17,9 +17,7 @@ const batchGetVoteTypes = async (voteTypeConditions: VoteTypeCondition[]) => {
   const postIds = voteTypeConditions.map((voteTypeCondition: VoteTypeCondition) => voteTypeCondition.postId);
   const userIds = voteTypeConditions.map((voteTypeCondition: VoteTypeCondition) => voteTypeCondition.userId);
 
-  console.log(postIds, userIds);
   const voteTypes = await Upvote.findBy({ postId: In(postIds), userId: In(userIds) });
-
   return voteTypeConditions.map((voteTypeCondition: VoteTypeCondition) =>
     voteTypes.find(voteType => voteType.postId === voteTypeCondition.postId && voteType.userId === voteTypeCondition.userId)
   );

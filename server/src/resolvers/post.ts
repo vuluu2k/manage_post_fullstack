@@ -30,9 +30,10 @@ export class PostResolver {
   }
 
   @FieldResolver(_return => Int)
-  async voteType(@Root() root: Post, @Ctx() { req }: Context) {
+  async voteType(@Root() root: Post, @Ctx() { req, dataLoaders: { voteTypeLoader } }: Context) {
     if (!req.session.userId) return 0;
-    const existingVote = await Upvote.findOne({ where: { postId: root.id, userId: req.session.userId } });
+    // const existingVote = await Upvote.findOne({ where: { postId: root.id, userId: req.session.userId } });
+    const existingVote = await voteTypeLoader.load({ postId: root.id, userId: req.session.userId });
     return (existingVote && existingVote?.value) || 0;
   }
 
