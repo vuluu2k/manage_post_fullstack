@@ -10,6 +10,7 @@ import { mapFieldErrors } from 'helpers/mapFieldErrors';
 import { useToast } from '@chakra-ui/react';
 import { routes } from 'config';
 import { useCheckAuth } from 'utils/useCheckAuth';
+import { initializeApollo } from 'lib/apolloClient';
 
 type Props = {};
 
@@ -42,6 +43,10 @@ function Login({}: Props) {
         isClosable: true,
         position: 'top',
       });
+
+      const apolloClient = initializeApollo();
+      apolloClient.resetStore();
+
       Router.push(routes.home);
     }
   };

@@ -6,7 +6,7 @@ import { PostsDocument, useMeQuery, usePostsQuery } from 'generated/graphql';
 import { addApolloState, initializeApollo } from 'lib/apolloClient';
 import PostEditDeleteButtons from 'components/PostEditDeleteButtons';
 import { NetworkStatus } from '@apollo/client';
-import { GetStaticProps } from 'next';
+import { GetServerSideProps, GetServerSidePropsContext } from 'next';
 import UpVoteSection from 'components/UpVoteSection';
 
 export const limit = 5;
@@ -72,8 +72,8 @@ const Index = () => {
   );
 };
 
-export const getStaticProps: GetStaticProps = async () => {
-  const apolloClient = initializeApollo();
+export const getSeverSideProps: GetServerSideProps = async (context: GetServerSidePropsContext) => {
+  const apolloClient = initializeApollo({ headers: context.req.headers });
 
   await apolloClient.query({
     query: PostsDocument,

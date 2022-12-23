@@ -1,6 +1,7 @@
 import { Avatar, AvatarBadge, Box, Button, Flex, Heading, Popover, PopoverContent, PopoverTrigger, Spinner } from '@chakra-ui/react';
 import Link from 'next/link';
 import Router from 'next/router';
+import { gql, Reference } from '@apollo/client';
 
 import { routes } from 'config';
 import { MeDocument, MeQuery, useLogoutMutation, useMeQuery } from 'generated/graphql';
@@ -15,6 +16,27 @@ function NavBar({}: Props) {
     logout({
       update(cache, { data }) {
         if (data?.logout) cache.writeQuery<MeQuery>({ query: MeDocument, data: { me: null } });
+        cache.modify({
+          fields: {
+            getPosts(existing) {
+              existing.paginatedPosts.forEach((post: Reference) => {
+                cache.writeFragment({
+                  id: post.__ref,
+                  fragment: gql`
+                    fragment voteType on Post {
+                      voteType
+                    }
+                  `,
+                  data: {
+                    voteType: 0,
+                  },
+                });
+              });
+
+              return existing;
+            },
+          },
+        });
       },
     });
   };
@@ -41,7 +63,9 @@ function NavBar({}: Props) {
                 </PopoverTrigger>
                 <PopoverContent p={2}>
                   <Button>Thông tin tài khoản</Button>
-                  <Button mt={2} onClick={()=>Router.push(routes.createPost)}>Tạo bài viết</Button>
+                  <Button mt={2} onClick={() => Router.push(routes.createPost)}>
+                    Tạo bài viết
+                  </Button>
                   <Button mt={2} onClick={handleOnLogout}>
                     Đăng xuất
                   </Button>
