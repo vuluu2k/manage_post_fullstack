@@ -25,13 +25,13 @@ export class PostResolver {
   }
 
   @FieldResolver(_return => User)
-  async user(@Root() root: Post) {
-    return await User.findOneBy({ id: root.userId });
+  async user(@Root() root: Post, @Ctx() { dataLoaders: { userLoader } }: Context) {
+    return await userLoader.load(root.userId);
   }
 
   @FieldResolver(_return => Int)
   async voteType(@Root() root: Post, @Ctx() { req }: Context) {
-    if (req.session.userId) return 0;
+    if (!req.session.userId) return 0;
     const existingVote = await Upvote.findOne({ where: { postId: root.id, userId: req.session.userId } });
     return (existingVote && existingVote?.value) || 0;
   }
@@ -176,8 +176,6 @@ export class PostResolver {
       }
 
       const existingVote = await transactionalEntityManager.findOne(Upvote, { where: { postId: postId, userId: req.session.userId } });
-
-      console.log('response', existingVote, existingVote?.value === voteType, voteType);
 
       if (existingVote) {
         if (existingVote.value === voteType) {

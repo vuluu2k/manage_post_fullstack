@@ -18,6 +18,7 @@ import session from 'express-session';
 import MongoStore from 'connect-mongo';
 import { COOKIE_NAME, __prod__ } from './constants/index';
 import { PostResolver } from './resolvers/post';
+import { buildDataLoaders } from './utils/dataLoaders';
 
 export const dataSource = new DataSource({
   type: 'postgres',
@@ -65,10 +66,11 @@ const main = async () => {
       resolvers: [HelloResolver, UserResolver, PostResolver],
     }),
     plugins: [ApolloServerPluginDrainHttpServer({ httpServer: httpServer }), ApolloServerPluginLandingPageGraphQLPlayground],
-    context: ({ req, res }): Pick<Context, 'req' | 'res' | 'dataSource'> => ({
+    context: ({ req, res }): Context => ({
       req,
       res,
       dataSource: dataSource,
+      dataLoaders: buildDataLoaders(),
     }),
   });
 
