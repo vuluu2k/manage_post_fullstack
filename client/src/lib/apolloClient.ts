@@ -4,8 +4,10 @@ import { onError } from '@apollo/client/link/error';
 import merge from 'deepmerge';
 import isEqual from 'lodash/isEqual';
 import { Post } from 'generated/graphql';
-import fetch from 'isomorphic-unfetch'
+import fetch from 'isomorphic-unfetch';
 import { IncomingHttpHeaders } from 'http';
+import Router from 'next/router';
+import { routes } from 'config';
 
 export const APOLLO_STATE_PROP_NAME = '__APOLLO_STATE__';
 
@@ -16,10 +18,14 @@ interface IApolloStateProps {
 }
 
 const errorLink = onError(({ graphQLErrors, networkError }) => {
-  if (graphQLErrors)
+  if (graphQLErrors) {
     graphQLErrors.forEach(({ message, locations, path }) =>
       console.log(`[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`)
     );
+    if (graphQLErrors[0].extensions.code === 'UNAUTHENTICATED') {
+      Router.replace(routes.login);
+    }
+  }
   if (networkError) console.log(`[Network error]: ${networkError}`);
 });
 
