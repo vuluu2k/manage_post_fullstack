@@ -1,4 +1,4 @@
-# crash-pg-graphql-mongodb-express-typeorm
+# Manage Post FullStack
 
 # You can create .env
 ```env
